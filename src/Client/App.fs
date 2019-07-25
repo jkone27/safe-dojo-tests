@@ -25,7 +25,7 @@ type Model =
 type Msg =
     | ErrorMsg of exn
     | PostYourName of string
-    | PostOk of unit
+    | PostOk of string
     | GetNames of string list
     | NameChanged of string
 
@@ -41,9 +41,9 @@ let getNames (_:unit) = promise {
 let postName name = promise {
     let! postResult = Fetch.postRecord "api/name" { MyName = name } []
     if not postResult.Ok then 
-        failwith "unable to post!"
+        return "unable to post!"
     else
-        ()
+        return "ok"
 }
 
 let init () =
@@ -61,7 +61,7 @@ let update msg model =
     | _, NameChanged name -> { model with Name = name }, Cmd.none
     |_, PostYourName name -> 
         model, Cmd.ofPromise postName name PostOk ErrorMsg
-    |_, PostOk _ -> model, Cmd.none
+    |_, PostOk _ -> model, Cmd.ofPromise getNames () GetNames ErrorMsg // update names list
     |_, GetNames names -> { model with Names = names}, Cmd.none
 
 [<AutoOpen>]
